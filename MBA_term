@@ -1,0 +1,43 @@
+import time  # 時刻に関するさまざまな関数を使用するためのパッケージ
+import pandas as pd  # データ解析を容易にする機能を提供する
+import requests  # WEBスクレイピングでHTMLファイルからデータを取得するのに使われる
+from bs4 import BeautifulSoup  # 取得したHTMLファイルをさらに解析するライブラリ
+import os
+
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36',
+}
+    
+url_result = []
+for page in range(0, 11):
+    print(page)
+    time.sleep(3)
+    url_door = "http://www.keiei.ne.jp/keyword/list.html?key_class=" + str(page)
+    response = requests.get(url_door, headers= headers)
+    response.encoding = response.apparent_encoding
+    soup = BeautifulSoup(response.text, 'html.parser')
+    block = soup.find('ul',{"class": "key_list_tag"}).find_all('li')
+    for each in block:
+        try:
+            url = each.find('a', href=True).attrs['href']
+            url_result.append(url)
+        except Exception as e:
+            pass
+print(len(url_result))
+i = 0
+for url_2 in url_result:
+    i += 1
+    print(i)
+    final = []
+    url_down = "http://www.keiei.ne.jp/keyword" + url_2.replace(".", "")
+    response2 = requests.get(url_down, headers= headers)
+    response2.encoding = response2.apparent_encoding
+    soup2 = BeautifulSoup(response2.text, 'html.parser')
+    category = soup2.find_all('span',{"itemprop": "title"})
+    final.append(category[3].text.strip())
+    final.append(category[4].text.strip())
+    contents = soup2.find('div',{"id": "yougo_all"}).find('p')
+    final.append(contents.text.strip())
+    log = pd.DataFrame([final])
+    log.to_csv(r"C:\Users\Ray94\OneDrive\career\致远\教材\用語集\MBA.csv", mode='a', index=False, header=None, encoding="utf-8_sig")
+    time.sleep(3)
